@@ -1,14 +1,16 @@
 void main
 (
+  /* one of the coordinate pairs : (0,0) (0,1) (1,1) (1,0) */
   float2 vertexPosition : POSITION,
 
-  uniform float2 xy,
-  uniform float2 wh,
+  uniform float4 dst,     /* destination coordinates (x,y,w,h) */
+  uniform float4 src,     /* source coordinates (x,y,w,h) */
+  uniform float2 texdim,  /* texture dimensions (w,h) */
 
   out float2 ePosition : POSITION,
   out float2 oTexcoord : TEXCOORD0
 )
 {
-  ePosition = vertexPosition * wh + xy;
-  oTexcoord = vertexPosition;
+  ePosition = vertexPosition * dst.zw + dst.xy;
+  oTexcoord = (vertexPosition * src.zw + src.xy) / texdim;
 }
