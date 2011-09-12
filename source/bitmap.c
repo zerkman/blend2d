@@ -13,11 +13,18 @@
 
 void bitmapInit(Bitmap *bitmap, u32 width, u32 height) {
   s32 status;
+  int i;
   bitmap->pixels = rsxMemalign(128, width * height * 4);
   status = rsxAddressToOffset(bitmap->pixels, &bitmap->offset);
   assert(status==0);
   bitmap->width = width;
   bitmap->height = height;
+  bitmap->quad = rsxMemalign(128, sizeof(*bitmap->quad));
+  for (i=0; i<4; ++i) {
+    bitmap->quad->indices[i] = i;
+    bitmap->quad->vertices[i].xu = (i&2) ? 1.0f : 0.0f;
+    bitmap->quad->vertices[i].yv = ((i+1)&2) ? 1.0f : 0.0f;
+  }
 }
 
 void bitmapDestroy(Bitmap *bitmap) {

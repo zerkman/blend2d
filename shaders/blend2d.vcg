@@ -1,12 +1,14 @@
 void main
 (
   float2 vertexPosition : POSITION,
-  float2 vertexTexcoord : TEXCOORD0,
+
+  uniform float2 xy,
+  uniform float2 wh,
 
   out float2 ePosition : POSITION,
   out float2 oTexcoord : TEXCOORD0
 )
 {
-  ePosition = vertexPosition;
-  oTexcoord = vertexTexcoord;
+  ePosition = vertexPosition * wh + xy;
+  oTexcoord = vertexPosition;
 }

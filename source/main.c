@@ -42,9 +42,9 @@ typedef struct {
   u32 *fp_buffer;
   u32 fp_offset;
   s32 id_vertexPosition;
-  s32 id_vertexTexcoord;
+  s32 id_xy;
+  s32 id_wh;
   s32 id_texture;
-
 } displayData;
 
 void setRenderTarget(displayData *vdat)
@@ -190,7 +190,8 @@ void init_screen(displayData *vdat) {
   memcpy(vdat->fp_buffer,vdat->fp_ucode,fpsize);
   rsxAddressToOffset(vdat->fp_buffer,&vdat->fp_offset);
   vdat->id_vertexPosition = rsxVertexProgramGetAttrib(vdat->vpo,"vertexPosition");
-  vdat->id_vertexTexcoord = rsxVertexProgramGetAttrib(vdat->vpo,"vertexTexcoord");
+  vdat->id_xy = rsxVertexProgramGetConst(vdat->vpo,"xy");
+  vdat->id_wh = rsxVertexProgramGetConst(vdat->vpo,"wh");
   vdat->id_texture = rsxFragmentProgramGetAttrib(vdat->fpo,"texture");
 
   gcmResetFlipStatus();
@@ -256,10 +257,12 @@ void blit_scale(displayData *vdat, Bitmap *bitmap,
 }
 
 void blend2d(displayData *vdat, Bitmap *bitmap,
-  u32 dstX, u32 dstY, u32 srcX, u32 srcY, u32 w, u32 h) {
-  float vertices[4][2];
-
+  u32 dstX, u32 dstY, u32 srcX, u32 srcY, u32 w, u32 h)
+{
   gcmTexture texture;
+  u32 offset;
+  float xy[2] = { dstX, dstY };
+  float wh[2] = { w, h };
 
   rsxInvalidateTextureCache(vdat->context, GCM_INVALIDATE_TEXTURE);
 
@@ -287,20 +290,16 @@ void blend2d(displayData *vdat, Bitmap *bitmap,
   rsxTextureFilter(vdat->context,vdat->id_texture,GCM_TEXTURE_LINEAR,GCM_TEXTURE_LINEAR,GCM_TEXTURE_CONVOLUTION_QUINCUNX);
   rsxTextureWrapMode(vdat->context,vdat->id_texture,GCM_TEXTURE_CLAMP_TO_EDGE,GCM_TEXTURE_CLAMP_TO_EDGE,GCM_TEXTURE_CLAMP_TO_EDGE,0,GCM_TEXTURE_ZFUNC_LESS,0);
 
-  vertices[0][0] = dstX;
-  vertices[0][1] = dstY;
-  vertices[1][0] = dstX;
-  vertices[1][1] = dstY + bitmap->height;
-  vertices[2][0] = dstX + bitmap->width;
-  vertices[2][1] = dstY + bitmap->height;
-  vertices[3][0] = dstX + bitmap->width;
-  vertices[3][1] = dstY;
+	rsxLoadVertexProgram(vdat->context,vdat->vpo,vdat->vp_ucode);
+  rsxAddressToOffset(bitmap->quad->vertices, &offset);
+	rsxBindVertexArrayAttrib(vdat->context,vdat->id_vertexPosition,offset,2*sizeof(f32),2,GCM_VERTEX_DATA_TYPE_F32,GCM_LOCATION_RSX);
+	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_xy,xy);
+	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_wh,wh);
 
-  rsxAddressToOffset(&mesh->vertices[0].pos,&offset);
-	rsxBindVertexArrayAttrib(context,vertexPosition_id,offset,sizeof(S3DVertex),3,GCM_VERTEX_DATA_TYPE_F32,GCM_LOCATION_RSX);
+  rsxLoadFragmentProgramLocation(vdat->context,vdat->fpo,vdat->fp_offset,GCM_LOCATION_RSX);
 
-sfqfqsfsqfd
-
+	rsxAddressToOffset(bitmap->quad->indices,&offset);
+	rsxDrawIndexArray(vdat->context,GCM_TYPE_QUADS,offset,4,GCM_INDEX_TYPE_16B,GCM_LOCATION_RSX);
 }
 
 int main(int argc, const char* argv[])
@@ -369,7 +368,7 @@ int main(int argc, const char* argv[])
     for (i=6; i>=0; --i) {
       int x = vdat.res.width * (0.1f + 0.8f * (0.5f+0.5f*sinf(M_PI + (vdat.framecnt - 10*i) * .01f)));
       int y = 150 + 400 * (0.5f+0.5f*sinf((vdat.framecnt - 10*i) * .02f));
-      blit_scale(&vdat, &bitmap, x, y, i*32, 0, 32, bitmap.height, 2.f);
+      blend2d(&vdat, &bitmap, x, y, i*32, 0, 32, bitmap.height);
     }
 
     /* Flip buffer onto screen */

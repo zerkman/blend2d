@@ -9,5 +9,5 @@ void main
 )
 {
   float3 color = tex2D(texture,texcoord).xyz;
-  oColor = tex2D(texture,texcoord);
+  oColor = float4(color, 1.0f);
 }
