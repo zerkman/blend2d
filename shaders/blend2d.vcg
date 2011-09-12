@@ -1,0 +1,12 @@
+void main
+(
+  float2 vertexPosition : POSITION,
+  float2 vertexTexcoord : TEXCOORD0,
+
+  out float2 ePosition : POSITION,
+  out float2 oTexcoord : TEXCOORD0
+)
+{
+  ePosition = vertexPosition;
+  oTexcoord = vertexTexcoord;
+}
