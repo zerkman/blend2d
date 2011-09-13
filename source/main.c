@@ -42,8 +42,9 @@ typedef struct {
   u32 *fp_buffer;
   u32 fp_offset;
   s32 id_vertexPosition;
-  s32 id_xy;
-  s32 id_wh;
+  s32 id_dst;
+  s32 id_src;
+  s32 id_texdim;
   s32 id_texture;
 } displayData;
 
@@ -190,8 +191,9 @@ void init_screen(displayData *vdat) {
   memcpy(vdat->fp_buffer,vdat->fp_ucode,fpsize);
   rsxAddressToOffset(vdat->fp_buffer,&vdat->fp_offset);
   vdat->id_vertexPosition = rsxVertexProgramGetAttrib(vdat->vpo,"vertexPosition");
-  vdat->id_xy = rsxVertexProgramGetConst(vdat->vpo,"xy");
-  vdat->id_wh = rsxVertexProgramGetConst(vdat->vpo,"wh");
+  vdat->id_dst = rsxVertexProgramGetConst(vdat->vpo,"dst");
+  vdat->id_src = rsxVertexProgramGetConst(vdat->vpo,"src");
+  vdat->id_texdim = rsxVertexProgramGetConst(vdat->vpo,"texdim");
   vdat->id_texture = rsxFragmentProgramGetAttrib(vdat->fpo,"texture");
 
   gcmResetFlipStatus();
@@ -261,8 +263,9 @@ void blend2d(displayData *vdat, Bitmap *bitmap,
 {
   gcmTexture texture;
   u32 offset;
-  float xy[2] = { dstX, dstY };
-  float wh[2] = { w, h };
+  float dst[4] = { dstX, dstY, w, h };
+  float src[4] = { srcX, srcY, w, h };
+  float texdim[2] = { bitmap->width, bitmap->height };
 
   rsxInvalidateTextureCache(vdat->context, GCM_INVALIDATE_TEXTURE);
 
@@ -292,9 +295,10 @@ void blend2d(displayData *vdat, Bitmap *bitmap,
 
 	rsxLoadVertexProgram(vdat->context,vdat->vpo,vdat->vp_ucode);
   rsxAddressToOffset(bitmap->quad->vertices, &offset);
-	rsxBindVertexArrayAttrib(vdat->context,vdat->id_vertexPosition,offset,2*sizeof(f32),2,GCM_VERTEX_DATA_TYPE_F32,GCM_LOCATION_RSX);
-	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_xy,xy);
-	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_wh,wh);
+	rsxBindVertexArrayAttrib(vdat->context,vdat->id_vertexPosition,offset,4*sizeof(f32),3,GCM_VERTEX_DATA_TYPE_F32,GCM_LOCATION_RSX);
+	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_dst,dst);
+	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_src,src);
+	rsxSetVertexProgramParameter(vdat->context,vdat->vpo,vdat->id_texdim,texdim);
 
   rsxLoadFragmentProgramLocation(vdat->context,vdat->fpo,vdat->fp_offset,GCM_LOCATION_RSX);
 

@@ -1,6 +1,6 @@
 void main
 (
-  float2 position : POSITION,
+  float4 position : POSITION,
   float2 texcoord : TEXCOORD0,
 
   uniform sampler2D texture,
@@ -9,5 +9,5 @@ void main
 )
 {
   float3 color = tex2D(texture,texcoord).xyz;
-  oColor = float4(color, 1.0f);
+  oColor = float4(color, 1.0f) + float4(.5, .5, .5, .5);
 }

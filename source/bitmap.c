@@ -22,8 +22,10 @@ void bitmapInit(Bitmap *bitmap, u32 width, u32 height) {
   bitmap->quad = rsxMemalign(128, sizeof(*bitmap->quad));
   for (i=0; i<4; ++i) {
     bitmap->quad->indices[i] = i;
-    bitmap->quad->vertices[i].xu = (i&2) ? 1.0f : 0.0f;
-    bitmap->quad->vertices[i].yv = ((i+1)&2) ? 1.0f : 0.0f;
+    bitmap->quad->vertices[i].x = ((i+1)&2) ? 1.0f : 0.0f;
+    bitmap->quad->vertices[i].y = (i&2) ? 1.0f : 0.0f;
+    bitmap->quad->vertices[i].z = 1.0f;
+    bitmap->quad->vertices[i].t = 1.0f;
   }
 }
 
@@ -50,7 +52,7 @@ void bitmapSetXpm(Bitmap *bitmap, char * xpm[]) {
   /* read palette */
   memset(palette, 0, sizeof(palette));
   for (ln = 1; ln <= ncolors; ++ln)
-    palette[(unsigned char)xpm[ln][0]] = strtol(&xpm[ln][5], NULL, 16);
+    palette[(unsigned char)xpm[ln][0]] = strtol(&xpm[ln][5], NULL, 16) | 0xff000000;
 
   /* convert image */
   pix = bitmap->pixels;

@@ -3,7 +3,7 @@
 typedef struct {
   u16 indices[4];
   struct {
-    f32 xu, yv;
+    f32 x, y, z, t;
   } vertices[4];
 } BitQuad;
 
